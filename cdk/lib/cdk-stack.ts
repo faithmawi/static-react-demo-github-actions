@@ -2,7 +2,8 @@ import * as cdk from "@aws-cdk/core";
 import * as s3 from "@aws-cdk/aws-s3";
 import * as iam from "@aws-cdk/aws-iam";
 import * as s3Deployment from "@aws-cdk/aws-s3-deployment";
-import { Bucket } from "@aws-cdk/aws-s3";
+import * as cloudFront from "@aws-cdk/aws-cloudfront";
+import * as origins from "@aws-cdk/aws-cloudfront-origins";
 
 export class CdkStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -26,6 +27,14 @@ export class CdkStack extends cdk.Stack {
       }
     );
 
+    const distribution = new cloudFront.Distribution(
+      this,
+      "faithmawi-static-react-app-distribution",
+      {
+        defaultBehavior: { origin: new origins.S3Origin(bucket) },
+      }
+    );
+
     //3. Add deployment boundary - which is a boundary for the iam policies - enforces this boundary across all assets - prevents us doing things we're not supposed to - for example creating an iam permissions with more permissions than your own role
     const boundary = iam.ManagedPolicy.fromManagedPolicyArn(
       this,
@@ -38,6 +47,10 @@ export class CdkStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, "Bucket URL", {
       value: bucket.bucketDomainName,
+    });
+
+    new cdk.CfnOutput(this, "CloudFront URL", {
+      value: distribution.distributionDomainName,
     });
   }
 }
